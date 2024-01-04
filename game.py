@@ -76,6 +76,7 @@ def print_menu():
 def game_start():
     coins = 16
     turn = 0
+    score = 0
     while True:
         print("Welcome to Ngee Ann City!")
         print("{:-^28}".format(""))
@@ -93,7 +94,7 @@ def game_start():
             continue
 
         if option == 1:
-            start_turn(coins, turn)
+            start_turn(coins, turn, score)
 
         elif option == 2:
             a = 1
@@ -105,7 +106,7 @@ def game_start():
             print("Thanks for playing!")
             break
 
-def start_turn(coins, turn):
+def start_turn(coins, turn, score):
     buildings = ['R', 'I', 'C', 'O', '*']
     while True:
         turn += 1
@@ -114,9 +115,12 @@ def start_turn(coins, turn):
         if coins == 0:
             print("You have ran out of coins! Game over...")
             return
+        elif buildingCount(map) == 400:
+            print("You have successfully populated Ngee Ann City! The game has ended :)")
+            return
         while True:
             show_map()
-            print("Turn: {:<5} Coins: {:<5}".format(str(turn), str(coins)))
+            print("Turn: {:<5} Coins: {:<5} Score: {:<5}".format(str(turn), str(coins), str(score)))
             print_menu()
             try:
                 option = int(input("Please enter a choice: "))
@@ -137,7 +141,7 @@ def start_turn(coins, turn):
         elif option == 1:
             while True:
                 try:
-                    buildChoice = input("Choose a building to build! Your choices: {} or {} ".format(buildings[randNo1], buildings[randNo2])).upper()
+                    buildChoice = input("Choose a building to build! Your choices: {} or {}. \nYour Choice: ".format(buildings[randNo1], buildings[randNo2])).upper()
                 except:
                     print("Error.. invalid input!! Try again!")
                     continue
@@ -147,7 +151,10 @@ def start_turn(coins, turn):
                     continue
                 else:
                     coins -= 1
-                    build(turn, buildChoice)
+                    building, row, column = build(turn, buildChoice)
+                    scoreAddition, coinsAddition = calcScore(building, row, column)
+                    score += scoreAddition
+                    coins += coinsAddition
                     break
         
         elif option == 2:
@@ -167,9 +174,9 @@ def build(turn, building):
         if not len(position) in [2,3] or not position[0].isalpha() or not position[1:].isdigit(): # check if position input is valid
             print("Error.. invalid position!! Enter another position!")
             continue
-        
+
         else:
-            column = int(position[1:])
+            column = int(position[1:]) - 1
             row = ord(position[0].upper()) - ord('A')
             if map[row][column][0] in buildings:
                 print("Error.. position already taken!! Enter another position!")
@@ -199,7 +206,7 @@ def build(turn, building):
                     print("Error.. invalid position!! Enter another position!")
                     continue
                 else:
-                    column = int(position[1:])
+                    column = int(position[1:]) - 1
                     row = ord(position[0].upper()) - ord('A')
                     if checkPosition(row, column) == False:
                         print("Error.. invalid position!! Enter another position!")
@@ -258,7 +265,101 @@ def checkPosition(row, column):
         return True
     return False
 
+def calcScore(building, row, col):
+    scoreAddition = 0
+    coinsAddition = 0
+    indices_to_check = [
+            (row, col-1), (row, col+1),
+            (row-1, col), (row+1, col),
+            (row-1, col-1), (row-1, col+1),
+            (row+1, col-1), (row+1, col+1)
+        ]
+    if building == "R":
+        temp = ["R","C"]
+        
+        # Residential next to industry(I)
+        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+        for dr, dc in directions:
+            try:
+                if map[row + dr][col + dc][0] == "I":
+                    scoreAddition += 1
+            except:
+                pass
+        # Residential adjacent to Residential(R) or Commercial(C)
+        for i, j in indices_to_check:
+            try:
+                if map[i][j][0] in temp:
+                    scoreAddition += 1
+                if map[i][j][0] == "C":
+                    coinsAddition += 1
+            except:
+                pass
+        # Residential(R) adjacent to Park(O)
+        for i, j in indices_to_check:
+            try:
+                if map[i][j][0] == "O":
+                    scoreAddition += 2
+            except:
+                pass
+    
+    if building == "I":
+        scoreAddition += 1
+        # Industry(I) adjacent to Residential(R)
+        for i, j in indices_to_check:
+            try:
+                if map[i][j][0] == "R":
+                    coinsAddition += 1
+                    scoreAddition += 1
+            except:
+                pass
+            
+    if building == "C":
+        # Commercial(C) adjacent to Commercial(C)
+        for i, j in indices_to_check:
+            try:
+                if map[i][j][0] == "C":
+                    scoreAddition += 1
+            except:
+                pass
+        # Commercial (C) adjacent to Residential(R)
+        for i, j in indices_to_check:
+            try:
+                if map[i][j][0] == "R":
+                    coinsAddition += 1
+                    scoreAddition += 1
+            except:
+                pass
 
+    if building == "O":
+        # Park(O) adjacent to Park(O)
+        for i, j in indices_to_check:
+            try:
+                if map[i][j][0] == "O":
+                    scoreAddition += 1
+            except:
+                pass
+        # Park(O) adjacent to Residential(R)
+        for i, j in indices_to_check:
+            try:
+                if map[i][j][0] == "R":
+                    scoreAddition += 2
+            except:
+                pass
+    
+    if building == "*":
+        if map[row][col-1][0] == "*":
+            scoreAddition += 1
+        if map[row][col+1][0] == "*":
+            scoreAddition += 1
+            
+    return scoreAddition, coinsAddition
+
+def buildingCount(map):
+    flat_list = [item for sublist1 in map for sublist2 in sublist1 for item in sublist2]
+
+    # Count the number of non-types (in this case, None elements)
+    count_non_types = sum(1 for element in flat_list if element is not None)
+    return count_non_types
 
 
 game_start()
