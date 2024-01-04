@@ -97,7 +97,10 @@ def game_start():
             start_turn(coins, turn, score)
 
         elif option == 2:
-            a = 1
+            turn, score, coins = loadGame()
+            turn -= 1
+            start_turn(coins, turn, score)
+            print("Previous save has been loaded succesfully!")
         
         elif option == 3:
             b = 1
@@ -128,7 +131,7 @@ def start_turn(coins, turn, score):
                 print("Error.. invalid input!! Try again!")
                 continue
 
-            if option not in range(2):
+            if option not in range(3):
                 print("Error.. invalid input!! Try again!")
                 continue
             else:
@@ -158,7 +161,8 @@ def start_turn(coins, turn, score):
                     break
         
         elif option == 2:
-            print("to be continued")
+            saveGame(turn, score, coins)
+            print("Game progress has been saved succesfully!")
             continue
 
 
@@ -361,5 +365,45 @@ def buildingCount(map):
     count_non_types = sum(1 for element in flat_list if element is not None)
     return count_non_types
 
+def loadGame():
+    datafile = open("GameSave.txt", "r")
+    lines = datafile.readlines()
+    playerSettings = lines[0].split(",")
+    savedMap = lines[1:]
+    
+    turn = int(playerSettings[0])
+    score = int(playerSettings[1])
+    coins = int(playerSettings[2])
+
+    for i in range (len(savedMap)):
+        temp = savedMap[i].split("-")
+        for j in range(len(temp)):
+            if temp[j].strip("\n") == "[None, None]" or temp[j].strip("\n") == "[None, None, None]":
+                map[i][j] = [None, None]
+            else:
+                unit = temp[j].strip("\n").strip("[").strip("]").split(",")
+                map[i][j] = [unit[0].strip("'"), None, None]
+
+    return turn, score, coins
+
+def saveGame(turn, score, coins):
+    saved_list = []
+    saved_list.append(turn)
+    saved_list.append(score)
+    saved_list.append(coins)
+    
+    datafile = open("GameSave.txt", "w")
+    for h in saved_list:
+        datafile.write("{},".format(h))
+    datafile.write("\n")
+    
+    for i in map:
+        row = []
+        for j in i:
+            row.append(str(j))
+        datafile.writelines("-".join(row))
+        datafile.write("\n")
+        
+    datafile.close()
 
 game_start()
