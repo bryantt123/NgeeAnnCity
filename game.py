@@ -103,7 +103,8 @@ def game_start():
             print("Previous save has been loaded succesfully!")
         
         elif option == 3:
-            b = 1
+            displayLeaderboard()
+            continue
 
         elif option == 4:
             print("Thanks for playing!")
@@ -117,9 +118,17 @@ def start_turn(coins, turn, score):
         randNo2 = random.randint(0,4)
         if coins == 0:
             print("You have ran out of coins! Game over...")
+            if checkLeaderboard(score) == True:
+                print("Impressive! Your score has reached the leaderboard!")
+                name = input("Enter your username in the leaderboard: ")
+                updateLeaderboard(name, score)
             return
         elif buildingCount(map) == 400:
             print("You have successfully populated Ngee Ann City! The game has ended :)")
+            if checkLeaderboard(score) == True:
+                print("Impressive! Your score has reached the leaderboard!")
+                name = input("Enter your username in the leaderboard: ")
+                updateLeaderboard(name, score)
             return
         while True:
             show_map()
@@ -405,5 +414,125 @@ def saveGame(turn, score, coins):
         datafile.write("\n")
         
     datafile.close()
+
+def displayLeaderboard():
+    datafile = open("Leaderboard.txt", "r")
+    lines = datafile.readlines()
+    newList = []
+    for line in lines:
+        newList.append(line.strip())
+    print("\n")
+    y = 1
+    print("LEADERBOARD\n")
+    for x in range (0, len(newList), 2):
+        print(str(y) + ". " + newList[x] + ": " + newList[x + 1])
+        y += 1
+    datafile.close()
+
+def checkLeaderboard(score):
+    name = ""
+
+    file = open("Leaderboard.txt", "r")
+    f = file.readlines()
+    file.close()
+    emptyFile = False
+
+    if len(f) == 0:
+        emptyFile = True
+
+    newList = []
+    for line in f:
+        newList.append(line.strip())
+
+    scoreList = []
+    for x in range(1, len(newList), 2):
+            scoreList.append(int(newList[x]))
+        
+    if len(newList) == 20:
+        if scoreList[9] > score:
+            return False
+        for index in range(0, len(scoreList), 1):
+            if scoreList[index] < score:
+                newList.pop(19)
+                newList.pop(18)
+                newList.insert(index * 2, name)
+                newList.insert(index * 2 + 1, score)
+                break
+            elif scoreList[index] == score:
+                if scoreList[9] == score:
+                    return False
+                else:
+                    newList.pop(19)
+                    newList.pop(18)
+                    newList.insert(index * 2, name)
+                    newList.insert(index *2 + 1, score)
+                    break
+            
+    else:
+        for index in range(0, len(scoreList), 1):
+            if scoreList[index] <= score:
+                newList.insert(index * 2, name)
+                newList.insert(index * 2 + 1, score)
+                break
+            if index == len(scoreList):
+                return False
+
+    return True
+
+def updateLeaderboard(name, score):
+    file = open("Leaderboard.txt", "r")
+    f = file.readlines()
+    file.close()
+    emptyFile = False
+
+    if len(f) == 0:
+        emptyFile = True
+
+    newList = []
+    for line in f:
+        newList.append(line.strip())
+
+    scoreList = []
+    for x in range(1, len(newList), 2):
+            scoreList.append(int(newList[x]))
+        
+    if len(newList) == 20:
+        if scoreList[9] > score:
+            return False
+        for index in range(0, len(scoreList), 1):
+            if scoreList[index] < score:
+                newList.pop(19)
+                newList.pop(18)
+                newList.insert(index * 2, name)
+                newList.insert(index * 2 + 1, score)
+                break
+            elif scoreList[index] == score:
+                if scoreList[9] == score:
+                    return False
+                else:
+                    newList.pop(19)
+                    newList.pop(18)
+                    newList.insert(index * 2, name)
+                    newList.insert(index *2 + 1, score)
+                    break
+            
+    else:
+        for index in range(0, len(scoreList), 1):
+            if scoreList[index] <= score:
+                newList.insert(index * 2, name)
+                newList.insert(index * 2 + 1, score)
+                break
+            if index == len(scoreList):
+                return False
+            
+    with open("Leaderboard.txt", "w") as file:
+        if emptyFile == True:
+            file.write(name + "\n" + str(score) + "\n")
+        else:
+            for value in newList:
+                file.write(str(value) + "\n")
+    file.close()
+    return True
+
 
 game_start()
